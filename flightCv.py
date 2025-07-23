@@ -227,6 +227,8 @@ class Ui_Dialog(object):
         global reducer
         global trestle
         global flightAssy
+        global shtTrestle
+        global stair
         selection = Gui.Selection.getSelection()
         if selection:
              selected_object = selection[0]
@@ -236,6 +238,8 @@ class Ui_Dialog(object):
                      print(obj.Label)
                      if obj.Label[:9] == "shtFlight":
                          shtFlight = obj
+                     elif obj.Label == "shtTrestle":
+                         shtTrestle = obj    
                      elif obj.Label[:8]=='Sketch_m':
                          Sketch_m=obj 
                      elif obj.Label=='idlerShaftAssy':
@@ -260,14 +264,18 @@ class Ui_Dialog(object):
                          trestle=obj    
                      elif obj.Label=='flightAssy001':
                          flightAssy=obj
+                     elif obj.Label=='stair' :
+                         stair=obj   
 
 
-                         self.le_W.setText(shtFlight.getContents('W0'))  
-                         self.le_L1.setText(shtFlight.getContents('l1'))  
-                         self.le_L2.setText(shtFlight.getContents('l2'))  
-                         self.le_beta.setText(shtFlight.getContents('beta'))
-                         #self.le_factor.setText(shtFlight.getContents('factor'))
-                         #print('aaaaaaaaaaaaaaaaaaaaaaaa')
+             self.le_W.setText(shtFlight.getContents('W0'))  
+             self.le_L1.setText(shtFlight.getContents('l1'))  
+             self.le_L2.setText(shtFlight.getContents('l2'))  
+             self.le_beta.setText(shtFlight.getContents('beta'))
+             H0=2500 + 0.5 * (float(shtFlight.getContents('l2')) - 4350)
+             stair.H=H0
+             stair.L=H0
+                         
 
     def update(self):
          if shtFlight is None :
@@ -283,8 +291,9 @@ class Ui_Dialog(object):
              shtFlight.set('l2',str(L2))
              shtFlight.set('W0',str(W0))
              shtFlight.set('beta',str(beta))
-             #shtFlight.set('factor',str(factor))
-
+             H0=2500 + 0.5 * (float(shtFlight.getContents('l2')) - 4350)
+             stair.H=H0
+             stair.L=H0
              
 
              total_length = 0.0
