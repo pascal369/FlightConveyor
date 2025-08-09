@@ -97,7 +97,9 @@ class Ui_Dialog(object):
 
         #self.le_C.setText('5000')
         QtCore.QObject.connect(self.pushButton3, QtCore.SIGNAL("pressed()"), self.setParts)
-        QtCore.QObject.connect(self.pushButton2, QtCore.SIGNAL("pressed()"), self.update)
+        for a in range(2):
+            QtCore.QObject.connect(self.pushButton2, QtCore.SIGNAL("pressed()"), self.update)
+
         QtCore.QObject.connect(self.pushButton_m, QtCore.SIGNAL("pressed()"), self.massCulc)
         QtCore.QObject.connect(self.pushButton_m2, QtCore.SIGNAL("pressed()"), self.massTally)
         QtCore.QObject.connect(self.pushButton_m20, QtCore.SIGNAL("pressed()"), self.massTally2)
@@ -131,7 +133,9 @@ class Ui_Dialog(object):
         try:
             obj.addProperty("App::PropertyFloat", "mass",label)
             obj.mass=g
+
         except:
+            obj.mass=g
             pass
 
     def massTally2(self):#csv
@@ -156,6 +160,7 @@ class Ui_Dialog(object):
             writer = csv.writer(csvfile)
             writer.writerow(["Name",'Standard','Count', "Mass[kg]"])
             writer.writerows(mass_list) 
+            
     def massTally(self):#spreadsheet
         doc = App.ActiveDocument
         # 新しいスプレッドシートを作成
@@ -310,9 +315,6 @@ class Ui_Dialog(object):
              shtFlight.set('pL',str(total_length))
              n=int(total_length/1524)
              shtFlight.set('n',str(n))
-             #print(total_length) 
-
-             
 
              g0=7.85
              g=round(idler.Shape.Volume*g0*1000/10**9,2) 
@@ -333,6 +335,7 @@ class Ui_Dialog(object):
              g0=7.85
              g=round(trough.Shape.Volume*g0*1000/10**9,2) 
              trough.mass=g
+             print('trough=',g)
 
              g0=7.85
              g=round(rollerAssy.Shape.Volume*g0*1000/10**9,2) 
@@ -350,14 +353,9 @@ class Ui_Dialog(object):
              g=round(reducer.Shape.Volume*g0*1000/10**9,2) 
              reducer.mass=g
 
-             #g0=7.85
-             #g=round(trestle.Shape.Volume*g0*1000/10**9,2) 
-             #trestle.mass=g
-
              g0=7.85
              g=round(flightAssy.Shape.Volume*g0*1000/10**9,2) 
              flightAssy.mass=g
-             #print('aaaaaaaaaaaaaaaaaaaaaaaaaaaa')
              App.ActiveDocument.recompute()
 
     def create(self): 
