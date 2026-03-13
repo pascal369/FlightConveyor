@@ -24,24 +24,28 @@ class Ui_Dialog(object):
         #flightWidth
         self.label_W = QtGui.QLabel('flightWidth',Dialog)
         self.label_W.setGeometry(QtCore.QRect(30, 13, 100, 22))
+        self.label_W.setStyleSheet("color: gray;")
         self.le_W = QtGui.QLineEdit('500',Dialog)
         self.le_W.setGeometry(QtCore.QRect(100, 10, 60, 20))
         self.le_W.setAlignment(QtCore.Qt.AlignCenter)
         #L1
         self.label_L1 = QtGui.QLabel('length L1',Dialog)
         self.label_L1.setGeometry(QtCore.QRect(30, 38, 100, 22))
+        self.label_L1.setStyleSheet("color: gray;")
         self.le_L1 = QtGui.QLineEdit('6000',Dialog)
         self.le_L1.setGeometry(QtCore.QRect(100, 35, 60, 20))
         self.le_L1.setAlignment(QtCore.Qt.AlignCenter)
         #L2
         self.label_L2 = QtGui.QLabel('length L2',Dialog)
         self.label_L2.setGeometry(QtCore.QRect(30, 63, 100, 22))
+        self.label_L2.setStyleSheet("color: gray;")
         self.le_L2 = QtGui.QLineEdit('3000',Dialog)
         self.le_L2.setGeometry(QtCore.QRect(100, 60, 60, 20))
         self.le_L2.setAlignment(QtCore.Qt.AlignCenter)
         #傾斜角
         self.label_beta = QtGui.QLabel('tiltAngle',Dialog)
         self.label_beta.setGeometry(QtCore.QRect(30, 88, 100, 22))
+        self.label_beta.setStyleSheet("color: gray;")
         self.le_beta = QtGui.QLineEdit('30',Dialog)
         self.le_beta.setGeometry(QtCore.QRect(100, 85, 60, 20))
         self.le_beta.setAlignment(QtCore.Qt.AlignCenter)
@@ -78,6 +82,7 @@ class Ui_Dialog(object):
         #密度
         self.lbl_gr = QtGui.QLabel('SpecificGravity',Dialog)
         self.lbl_gr.setGeometry(QtCore.QRect(167, 112, 80, 12))
+        self.lbl_gr.setStyleSheet("color: gray;")
         self.le_gr = QtGui.QLineEdit(Dialog)
         self.le_gr.setGeometry(QtCore.QRect(270,112, 50, 20))
         self.le_gr.setAlignment(QtCore.Qt.AlignCenter)  
@@ -277,9 +282,9 @@ class Ui_Dialog(object):
              self.le_L1.setText(shtFlight.getContents('l1'))  
              self.le_L2.setText(shtFlight.getContents('l2'))  
              self.le_beta.setText(shtFlight.getContents('beta'))
-             H0=2500 + 0.5 * (float(shtFlight.getContents('l2')) - 4350)
-             stair.H=H0
-             stair.L=H0
+            # H0=2500 + 0.5 * (float(shtFlight.getContents('l2')) - 4350)
+            # stair.H=H0
+            # stair.L=H0
                          
 
     def update(self):
@@ -296,9 +301,9 @@ class Ui_Dialog(object):
              shtFlight.set('l2',str(L2))
              shtFlight.set('W0',str(W0))
              shtFlight.set('beta',str(beta))
-             H0=2500 + 0.5 * (float(shtFlight.getContents('l2')) - 4350)
-             stair.H=H0
-             stair.L=H0
+             #H0=2500 + 0.5 * (float(shtFlight.getContents('l2')) - 4350)
+             #stair.H=H0
+             #stair.L=H0
              
 
              total_length = 0.0
@@ -359,16 +364,51 @@ class Ui_Dialog(object):
              App.ActiveDocument.recompute()
 
     def create(self): 
+         doc=App.ActiveDocument
          fname='flightConveyor.FCStd'
          base=os.path.dirname(os.path.abspath(__file__))
          joined_path = os.path.join(base, fname) 
 
-         try:
-            Gui.ActiveDocument.mergeProject(joined_path)
-         except:
-            doc=App.newDocument()
-            Gui.ActiveDocument.mergeProject(joined_path)
-         Gui.SendMsgToActiveView("ViewFit")   
+          # --- インポート前のオブジェクトリストを取得 ---
+         old_obj_names = [o.Name for o in doc.Objects]
+          # マージ実行
+         Gui.ActiveDocument.mergeProject(joined_path)
+         doc.recompute() # 一旦再計算して内部IDを確定させる
+         # --- インポート後に増えたオブジェクトを特定 ---
+         new_objs = [o for o in doc.Objects if o.Name not in old_obj_names]
+         
+         if not new_objs:
+             print("Error: オブジェクトが読み込まれませんでした。")
+             return
+         #
+         move_target = None
+         for o in new_objs:
+             if "flightCv"  in o.Label or "flightCv"  in o.Name:
+                 move_target = o
+                 break
+             
+         # 見つからなければ、新しく入ってきた最初のオブジェクトをターゲットにする
+         if not move_target:
+             move_target = new_objs[0]
+         view = Gui.ActiveDocument.ActiveView
+         callbacks = {}
+         def move_cb(info):
+             pos = info["Position"]
+             # 重要：ビュー平面上の3D座標を取得
+             p = view.getPoint(pos)
+             if move_target:
+                 move_target.Placement.Base = p
+                 #view.softRedraw()
+         def click_cb(info):
+             if info["State"] == "DOWN" and info["Button"] == "BUTTON1":
+                 # コールバック解除
+                 view.removeEventCallback("SoLocation2Event", callbacks["move"])
+                 view.removeEventCallback("SoMouseButtonEvent", callbacks["click"])
+                 App.ActiveDocument.recompute()
+                 print("Placed: " + move_target.Label)
+         # イベント登録
+         callbacks["move"] = view.addEventCallback("SoLocation2Event", move_cb)
+         callbacks["click"] = view.addEventCallback("SoMouseButtonEvent", click_cb)    
          
 class main():
         d = QtGui.QWidget()
